@@ -68,6 +68,7 @@ public class BotApiStatusApplication {
 		}).start();
 		cli.printAtLevel(Level.Info, "Creating bot api instance");
 		TelegramBot bot = new TelegramBot(botToken);
+		new BotHandler(bot);
 		SpringApplication.run(BotApiStatusApplication.class, args);
 	}
 

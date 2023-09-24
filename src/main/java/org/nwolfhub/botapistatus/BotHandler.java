@@ -43,7 +43,7 @@ public class BotHandler {
                     offsetId = updateList.get(updateList.size() - 1).updateId() + 1;
                     for (Update update : updateList) {
                         new Thread( () -> {
-                            if (update.message() != null) {
+                            if (update.message() != null && update.message().text()!=null) {
                                 Long sent = new Date().getTime();
                                 bot.execute(new SendMessage(update.message().chat().id(), update.message().text()), new Callback<SendMessage, SendResponse>() {
                                     @Override
