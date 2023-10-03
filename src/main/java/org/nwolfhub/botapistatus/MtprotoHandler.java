@@ -29,6 +29,7 @@ public class MtprotoHandler {
                 client.send(getMe, result -> {
                     Long response = new Date().getTime();
                     if (!result.isError()) {
+                        ReportWatcher.mtNormalized.addValue(response-sent);
                         ReportWatcher.mtprotoReports.add(new Report(new Date().getTime(), Math.toIntExact(response - sent), true));
                     } else {
                         ReportWatcher.mtprotoReports.add(new Report(new Date().getTime(), Math.toIntExact(response - sent), false));

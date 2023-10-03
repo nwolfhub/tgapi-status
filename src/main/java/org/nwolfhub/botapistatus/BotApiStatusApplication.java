@@ -50,7 +50,7 @@ public class BotApiStatusApplication {
 		String mtprotoToken = configurator.getSingleValue("mtproto_token");
 		String botToken = configurator.getSingleValue("bot_token");
 		cli.printAtLevel(Level.Info, "Finished reading config");
-		System.setOut(null); //fuck tdlight
+		//System.setOut(null); //fuck tdlight
 		new Thread(() -> {
 			try (SimpleTelegramClientFactory factory = new SimpleTelegramClientFactory()) {
 				cli.printAtLevel(Level.Info, "Creating mtproto bot instance");
@@ -65,10 +65,10 @@ public class BotApiStatusApplication {
 			} catch (Exception e) {
 				cli.printAtLevel(Level.Panic, "Error while creating mtproto client:", e);
             }
-		}).start();
+		});
 		cli.printAtLevel(Level.Info, "Creating bot api instance");
 		TelegramBot bot = new TelegramBot(botToken);
-		new BotHandler(bot);
+		//new BotHandler(bot);
 		SpringApplication.run(BotApiStatusApplication.class, args);
 	}
 

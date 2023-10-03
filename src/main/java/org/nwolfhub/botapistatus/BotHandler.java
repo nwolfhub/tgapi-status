@@ -3,8 +3,10 @@ package org.nwolfhub.botapistatus;
 import com.pengrad.telegrambot.Callback;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Update;
+import com.pengrad.telegrambot.request.GetMe;
 import com.pengrad.telegrambot.request.GetUpdates;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.response.GetMeResponse;
 import com.pengrad.telegrambot.response.GetUpdatesResponse;
 import com.pengrad.telegrambot.response.SendResponse;
 import org.nwolfhub.botapistatus.monitor.Report;
@@ -49,18 +51,34 @@ public class BotHandler {
                                     @Override
                                     public void onResponse(SendMessage request, SendResponse response) {
                                         Long result = new Date().getTime();
+                                        ReportWatcher.botNormalized.addValue(result-sent);
                                         ReportWatcher.botapiReports.add(new Report(new Date().getTime(), Math.toIntExact(result - sent), true));
                                     }
 
                                     @Override
                                     public void onFailure(SendMessage request, IOException e) {
                                         Long result = new Date().getTime();
+                                        //normalized not counted here as the request was not successful
                                         ReportWatcher.botapiReports.add(new Report(new Date().getTime(), Math.toIntExact(result - sent), false));
                                     }
                                 });
                             }
                         }).start();
                     }
+                } else {
+                    new Thread(() -> {
+                        Long sent = new Date().getTime();
+                        GetMeResponse getMe = bot.execute(new GetMe());
+                        if(getMe.isOk()) {
+                            Long result = new Date().getTime();
+                            ReportWatcher.botNormalized.addValue(result-sent);
+                            ReportWatcher.botapiReports.add(new Report(new Date().getTime(), Math.toIntExact(result - sent), true));
+                        } else {
+                            Long result = new Date().getTime();
+                            //normalized not counted here as the request was not successful
+                            ReportWatcher.botapiReports.add(new Report(new Date().getTime(), Math.toIntExact(result - sent), false));
+                        }
+                    }).start();
                 }
             } catch (Exception e) {
                 ReportWatcher.botapiReports.add(new Report(new Date().getTime(), Math.toIntExact(new Date().getTime()-sentGet), false));
