@@ -1,13 +1,16 @@
 package org.nwolfhub.botapistatus;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.board.Board;
 import com.vaadin.flow.component.charts.Chart;
-import com.vaadin.flow.component.charts.model.ChartType;
-import com.vaadin.flow.component.charts.model.Configuration;
-import com.vaadin.flow.component.charts.model.ListSeries;
+import com.vaadin.flow.component.charts.model.*;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
+import org.nwolfhub.botapistatus.monitor.Report;
+import org.nwolfhub.botapistatus.monitor.ReportWatcher;
+
+import java.util.stream.Collectors;
 
 @Route("/")
 public class Stats extends VerticalLayout {
@@ -18,10 +21,21 @@ public class Stats extends VerticalLayout {
         layout2.setAlignItems(Alignment.CENTER);
         add(layout2);
         add(new Divider());
-        Chart chart = new Chart(ChartType.BULLET);
+        Chart chart = new Chart(ChartType.TIMELINE);
         Configuration conf = chart.getConfiguration();
         conf.setTitle("Telegram status");
+        YAxis yAxis = new YAxis();
+        yAxis.setCategories("Response time");
+        conf.addyAxis(yAxis);
+        ListSeries series = new ListSeries("Telegram api");
+        ListSeries series1 = new ListSeries("MTProto api");
+        System.out.println(ReportWatcher.botapiReports);
+        series.setData(ReportWatcher.botapiReports.stream().map(Report::getMs).collect(Collectors.toList()));
+        series1.setData(ReportWatcher.mtprotoReports.stream().map(Report::getMs).collect(Collectors.toList()));
+        conf.addSeries(series);
+        conf.addSeries(series1);
         add(chart);
+
     }
     public static class Divider extends Span {
         public Divider() {

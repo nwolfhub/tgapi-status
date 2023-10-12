@@ -65,10 +65,10 @@ public class BotApiStatusApplication {
 			} catch (Exception e) {
 				cli.printAtLevel(Level.Panic, "Error while creating mtproto client:", e);
             }
-		});
+		}).start();
 		cli.printAtLevel(Level.Info, "Creating bot api instance");
 		TelegramBot bot = new TelegramBot(botToken);
-		//new BotHandler(bot);
+		new BotHandler(bot);
 		SpringApplication.run(BotApiStatusApplication.class, args);
 	}
 
