@@ -1,8 +1,12 @@
 package org.nwolfhub.botapistatus.monitor;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import org.nwolfhub.botapistatus.BotApiStatusApplication;
+import org.nwolfhub.easycli.model.Level;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class ReportWatcher {
     public static List<Report> mtprotoReports = new ArrayList<>();
@@ -11,7 +15,9 @@ public class ReportWatcher {
     public static Normalized botNormalized = new Normalized();
     public static Normalized mtNormalized = new Normalized();
 
-    public static List<ResultedReport> minuteReports;
+    public static List<ResultedReport> minuteBotReports = new ArrayList<>();
+    public static List<ResultedReport> minuteMtReports = new ArrayList<>();
+
 
     private void levelDates() {
         walkOnReports(mtprotoReports, botapiReports);
@@ -48,7 +54,23 @@ public class ReportWatcher {
     private void promoterThread() {
         while (true) {
             try {
-
+                Thread.sleep(60000);
+                HashMap<Long, Integer> beginDates = new HashMap<>();
+                AtomicReference<Integer> value = new AtomicReference<>(0);
+                AtomicReference<Integer> successAmount = new AtomicReference<>(0);
+                botapiReports.forEach(e -> {
+                    Long floored = (long) (Math.floor((double) e.getDate()/1000L/60L)*1000L*60L);
+                    if(beginDates.containsKey(floored)) beginDates.put(floored, beginDates.get(floored)+1); else beginDates.put(floored, 1);
+                    value.updateAndGet(v -> v + e.getMs());
+                    if(e.getSuccess()) successAmount.getAndSet(successAmount.get() + 1);
+                });
+                Integer max = beginDates.keySet().stream().map(beginDates::get).max(Comparator.naturalOrder()).get();
+                Long beginDate = (Long) IntStream.range(0, beginDates.size()).filter(i -> beginDates.get(beginDates.keySet().toArray()[i]).equals(max)).mapToObj(i->beginDates.keySet().toArray()[i]).toList().get(0);
+                value.set(value.get()/botapiReports.size());
+                boolean success = Double.valueOf(successAmount.get()) / (double) botapiReports.size() > 0.9d;
+                boolean hadProblems = successAmount.get()<botapiReports.size();
+            } catch (InterruptedException e) {
+                BotApiStatusApplication.cli.printAtLevel(Level.Info, "Shutting down promoter");
             }
         }
     }
