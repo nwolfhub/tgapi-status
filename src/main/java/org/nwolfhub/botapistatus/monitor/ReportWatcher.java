@@ -55,23 +55,29 @@ public class ReportWatcher {
         while (true) {
             try {
                 Thread.sleep(60000);
-                HashMap<Long, Integer> beginDates = new HashMap<>();
-                AtomicReference<Integer> value = new AtomicReference<>(0);
-                AtomicReference<Integer> successAmount = new AtomicReference<>(0);
-                botapiReports.forEach(e -> {
-                    Long floored = (long) (Math.floor((double) e.getDate()/1000L/60L)*1000L*60L);
-                    if(beginDates.containsKey(floored)) beginDates.put(floored, beginDates.get(floored)+1); else beginDates.put(floored, 1);
-                    value.updateAndGet(v -> v + e.getMs());
-                    if(e.getSuccess()) successAmount.getAndSet(successAmount.get() + 1);
-                });
-                Integer max = beginDates.keySet().stream().map(beginDates::get).max(Comparator.naturalOrder()).get();
-                Long beginDate = (Long) IntStream.range(0, beginDates.size()).filter(i -> beginDates.get(beginDates.keySet().toArray()[i]).equals(max)).mapToObj(i->beginDates.keySet().toArray()[i]).toList().get(0);
-                value.set(value.get()/botapiReports.size());
-                boolean success = Double.valueOf(successAmount.get()) / (double) botapiReports.size() > 0.9d;
-                boolean hadProblems = successAmount.get()<botapiReports.size();
+                
             } catch (InterruptedException e) {
                 BotApiStatusApplication.cli.printAtLevel(Level.Info, "Shutting down promoter");
             }
         }
+    }
+    
+    
+    private static ResultedReport createResultedReport(List<Report> reports, ResultedReport.Level level) {
+        HashMap<Long, Integer> beginDates = new HashMap<>();
+        AtomicReference<Integer> value = new AtomicReference<>(0);
+        AtomicReference<Integer> successAmount = new AtomicReference<>(0);
+        reports.forEach(e -> {
+            Long floored = (long) (Math.floor((double) e.getDate()/1000L/60L)*1000L*60L);
+            if(beginDates.containsKey(floored)) beginDates.put(floored, beginDates.get(floored)+1); else beginDates.put(floored, 1);
+            value.updateAndGet(v -> v + e.getMs());
+            if(e.getSuccess()) successAmount.getAndSet(successAmount.get() + 1);
+        });
+        Integer max = beginDates.keySet().stream().map(beginDates::get).max(Comparator.naturalOrder()).get();
+        Long beginDate = (Long) IntStream.range(0, beginDates.size()).filter(i -> beginDates.get(beginDates.keySet().toArray()[i]).equals(max)).mapToObj(i->beginDates.keySet().toArray()[i]).toList().get(0);
+        value.set(value.get()/reports.size());
+        boolean success = Double.valueOf(successAmount.get()) / (double) reports.size() > 0.9d;
+        boolean hadProblems = successAmount.get()<reports.size();
+        return new ResultedReport(ResultedReport.Level.values()[level.ordinal()+1], beginDate, value.get(), success, hadProblems);
     }
 }
