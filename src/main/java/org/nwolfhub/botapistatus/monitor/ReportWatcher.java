@@ -3,6 +3,7 @@ package org.nwolfhub.botapistatus.monitor;
 import org.nwolfhub.botapistatus.BotApiStatusApplication;
 import org.nwolfhub.easycli.model.Level;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -38,6 +39,10 @@ public class ReportWatcher {
         }
     }
 
+    private void exportReportToFile(ResultedReport report, Report.Type type) {
+        File baseDir = type==Report.Type.botapi?new File("reports/botapi/"):new File("reports/mtproto");
+    }
+
     private void levelerThread() {
         while (true) {
             try {
@@ -68,7 +73,7 @@ public class ReportWatcher {
         AtomicReference<Integer> value = new AtomicReference<>(0);
         AtomicReference<Integer> successAmount = new AtomicReference<>(0);
         reports.forEach(e -> {
-            Long floored = (long) (Math.floor((double) e.getDate()/1000L/60L)*1000L*60L);
+            Long floored = (long) (Math.floor((double) e.getDate()/calculateFloorValue(level))*calculateFloorValue(level));
             if(beginDates.containsKey(floored)) beginDates.put(floored, beginDates.get(floored)+1); else beginDates.put(floored, 1);
             value.updateAndGet(v -> v + e.getMs());
             if(e.getSuccess()) successAmount.getAndSet(successAmount.get() + 1);
@@ -79,5 +84,21 @@ public class ReportWatcher {
         boolean success = Double.valueOf(successAmount.get()) / (double) reports.size() > 0.9d;
         boolean hadProblems = successAmount.get()<reports.size();
         return new ResultedReport(ResultedReport.Level.values()[level.ordinal()+1], beginDate, value.get(), success, hadProblems);
+    }
+
+    private static Long calculateFloorValue(ResultedReport.Level level) {
+        switch (level) {
+            case Minute -> {
+                return 1000L*60L;
+            } case Hour -> {
+                return 1000L*60L*60L;
+            }
+            case Day -> {
+                return 1000L*60L*60L*24;
+            } case Month -> {
+                return 1000L*60L*60L*30L;
+            }
+        }
+        return 1L;
     }
 }

@@ -39,4 +39,9 @@ public class Report {
         this.success = success;
         return this;
     }
+
+    public enum Type {
+        mtproto,
+        botapi
+    }
 }
