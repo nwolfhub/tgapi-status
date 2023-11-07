@@ -4,6 +4,10 @@ import org.nwolfhub.botapistatus.BotApiStatusApplication;
 import org.nwolfhub.easycli.model.Level;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -39,8 +43,23 @@ public class ReportWatcher {
         }
     }
 
-    private void exportReportToFile(ResultedReport report, Report.Type type) {
+    private void exportReportToFile(ResultedReport report, Report.Type type) throws IllegalStateException, IOException {
         File baseDir = type==Report.Type.botapi?new File("reports/botapi/"):new File("reports/mtproto");
+        String date = new SimpleDateFormat("MM-yyyy").format(new Date());
+        String nextFile = "";
+        switch (report.level) {
+            case Hour -> nextFile = new SimpleDateFormat("dd/HH").format(report.getBeginDate()) + ".report";
+            case Day -> nextFile = new SimpleDateFormat("dd").format(report.getBeginDate()) + ".report";
+            case Month -> nextFile = new SimpleDateFormat("monthly.report").format(report.getBeginDate()) + ".report";
+        }
+        File todaysFile = new File(baseDir, nextFile);
+        if(todaysFile.exists()) {
+            throw new IllegalStateException("Report file already exists");
+        } else {
+            try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(todaysFile))) {
+                out.writeObject(report);
+            }
+        }
     }
 
     private void levelerThread() {
@@ -60,7 +79,8 @@ public class ReportWatcher {
         while (true) {
             try {
                 Thread.sleep(60000);
-                
+                minuteMtReports.add(createResultedReport(mtprotoReports, ResultedReport.Level.Minute));
+                minuteBotReports.add(createResultedReport(botapiReports, ResultedReport.Level.Minute));
             } catch (InterruptedException e) {
                 BotApiStatusApplication.cli.printAtLevel(Level.Info, "Shutting down promoter");
             }

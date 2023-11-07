@@ -72,13 +72,4 @@ public class ResultedReport implements Serializable {
         this.hadProblems = hadProblems;
         return this;
     }
-
-    public void prePromote() {
-        switch (level) {
-            case Minute -> {
-                Long rounded = (long) (Math.round(Double.valueOf(beginDate)/1000d/60d)*60d*1000);
-
-            }
-        }
-    }
 }

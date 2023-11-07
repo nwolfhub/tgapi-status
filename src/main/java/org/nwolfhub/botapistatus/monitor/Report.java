@@ -1,6 +1,8 @@
 package org.nwolfhub.botapistatus.monitor;
 
-public class Report {
+import java.io.Serializable;
+
+public class Report implements Serializable {
     public Long date;
     public Integer ms;
     public Boolean success;
